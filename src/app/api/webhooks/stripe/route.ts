@@ -120,7 +120,7 @@ async function handleInvoicePaymentFailed(
         ? invoice.subscription
         : invoice.subscription?.id,
     customerEmail,
-    customerName,
+    customerName: customerName ?? undefined,
     amountCents: invoice.amount_due,
     currency: invoice.currency,
     failureCode: charge?.failure_code ?? undefined,
