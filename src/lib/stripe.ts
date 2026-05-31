@@ -1,8 +1,22 @@
 import Stripe from "stripe";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
-  typescript: true,
+let _stripe: Stripe | null = null;
+
+export function getStripe(): Stripe {
+  if (!_stripe) {
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2024-06-20",
+      typescript: true,
+    });
+  }
+  return _stripe;
+}
+
+// Lazy proxy for backward compat
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop) {
+    return (getStripe() as any)[prop];
+  },
 });
 
 /**
@@ -21,7 +35,7 @@ export function stripeAsConnected(accessToken: string) {
 export function getStripeConnectUrl(state: string): string {
   const params = new URLSearchParams({
     response_type: "code",
-    client_id: process.env.STRIPE_CONNECT_CLIENT_ID!,
+    client_id: process.env.STRIPE_CONNECT_CLIENT_ID || "",
     scope: "read_write",
     redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/stripe/connect/callback`,
     state,
@@ -37,7 +51,7 @@ export const PRICING = {
   starter: {
     name: "Starter",
     price: 19,
-    priceId: process.env.STRIPE_PRICE_STARTER!,
+    priceId: process.env.STRIPE_PRICE_STARTER || "",
     features: [
       "Up to 100 failed payments/mo",
       "3-email dunning sequence",
@@ -49,7 +63,7 @@ export const PRICING = {
   growth: {
     name: "Growth",
     price: 39,
-    priceId: process.env.STRIPE_PRICE_GROWTH!,
+    priceId: process.env.STRIPE_PRICE_GROWTH || "",
     features: [
       "Up to 500 failed payments/mo",
       "Custom email templates",
@@ -62,7 +76,7 @@ export const PRICING = {
   scale: {
     name: "Scale",
     price: 79,
-    priceId: process.env.STRIPE_PRICE_SCALE!,
+    priceId: process.env.STRIPE_PRICE_SCALE || "",
     features: [
       "Unlimited failed payments",
       "Custom branding",
